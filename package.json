@@ -1,0 +1,40 @@
+{
+  "name": "js_scaling_of_serifs",
+  "license": "UNLICENSED",
+  "private": "true",
+  "scripts": {
+    "start": "dwfeBundler opt",
+    "prod": "dwfeBundler opt --prod"
+  },
+  "dependencies": {
+    "@do-while-for-each/react-cmmn-packs": "18.x.x",
+    "@do-while-for-each/tree-cell-react": "18.x.x",
+    "@do-while-for-each/math": "3.x.x"
+  },
+  "devDependencies": {
+    "@do-while-for-each/tsconfig": "1.x.x",
+    "@do-while-for-each/bundler": "2.x.x"
+  },
+  "dwfeBundlerOptions": {
+    "opt": {
+      "bundler": "react",
+      "entryPoint": "src/index.tsx",
+      "templatePath": "public/index.html",
+      "svgLoaderType": "rawFileContent",
+      "port": 3300,
+      "printOptions": true
+    }
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
