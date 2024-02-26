@@ -3,6 +3,7 @@ import {canvasHeight, canvasWidth} from "../app-common/constant";
 import {getCursorCoordinates} from "./util/cursor-coordinates";
 import {ScaleGenerator} from "./util/scale-generator";
 import {IPointConverter} from "./contract";
+import {DragGenerator} from "./util/drag-generator";
 
 export class SerifsController {
 
@@ -35,8 +36,8 @@ export class SerifsController {
     return (point: IPoint): IPoint => Matrix.apply(conv, point);
   }
 
-
   scaleGenerator: ScaleGenerator;
+  dragGenerator: DragGenerator;
 
   constructor() {
     this.basePixelToValue = Operator.proportionsWithRotationConverter(
@@ -63,14 +64,20 @@ export class SerifsController {
     this.context.font = '14px serif';
     this.draw();
     const clientRect = canvasElement.getBoundingClientRect();
+
+    const setNextTransform = (next: IMatrix) => {
+      this.forward = Matrix.multiply(next, this.forward);
+      this.inverse = Matrix.invert(this.forward);
+      this.draw();
+    };
     this.scaleGenerator = new ScaleGenerator(
       canvasElement,
       (event: any) => getCursorCoordinates(event, clientRect),
-      (next: IMatrix) => {
-        this.forward = Matrix.multiply(next, this.forward);
-        this.inverse = Matrix.invert(this.forward);
-        this.draw();
-      },
+      setNextTransform,
+    );
+    this.dragGenerator = new DragGenerator(
+      canvasElement,
+      setNextTransform,
     );
   }
 
@@ -83,8 +90,11 @@ export class SerifsController {
   drawSerifsAndLabels() {
     const pixelToValue = this.transformedPixelToValue;
     const valueToPixel = this.valueToTransformedPixel;
+    // const step = Matrix.apply(this.basePixelToValue, [this.step, 0])[0]
+    // const step = this.pixelToTransformedValue([this.step, 0])[0];
     const step = this.step;
     // const step = pixelToValue([this.step, 0])[0];
+    console.log(`step`, step);
 
     this.context.clearRect(0, 0, canvasWidth, canvasHeight);
 
@@ -114,6 +124,7 @@ export class SerifsController {
 
   dispose() {
     this.scaleGenerator?.dispose();
+    this.dragGenerator?.dispose();
   }
 
 }
