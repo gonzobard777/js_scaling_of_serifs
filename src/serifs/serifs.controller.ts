@@ -1,18 +1,21 @@
 import {Basis, identityMatrix, IMatrix, IPoint, Matrix, Operator} from "@do-while-for-each/math";
+import {cell, makeObservable} from "@do-while-for-each/tree-cell";
+import {CursorPositionGenerator} from "./util/cursor-position-generator";
 import {canvasHeight, canvasWidth} from "../app-common/constant";
 import {getCursorCoordinates} from "./util/cursor-coordinates";
 import {ScaleGenerator} from "./util/scale-generator";
-import {IPointConverter} from "./contract";
 import {DragGenerator} from "./util/drag-generator";
+import {IPointConverter} from "./contract";
 
 export class SerifsController {
 
   context: CanvasRenderingContext2D;
-  step = 100; // пиксели
-  visValuesRangeX: IVisValuesRange = {
-    minVis: 0,
-    maxVis: 500,
+
+  valuesRangeX: IValuesRange = {
+    min: 0,
+    max: 800,
   };
+  valueStep = 100;
 
   basePixelToValue: IMatrix;
   baseValueToPixel: IMatrix;
@@ -38,6 +41,9 @@ export class SerifsController {
 
   scaleGenerator: ScaleGenerator;
   dragGenerator: DragGenerator;
+  cursorPositionGenerator: CursorPositionGenerator;
+
+  cursorPos: { pixel: number; value: number } = {pixel: 0, value: 0};
 
   constructor() {
     this.basePixelToValue = Operator.proportionsWithRotationConverter(
@@ -47,16 +53,22 @@ export class SerifsController {
         [0, canvasHeight],
       ),
       Basis.fromExtent(
-        [this.visValuesRangeX.minVis!, 0],
-        [this.visValuesRangeX.maxVis!, 0],
+        [this.valuesRangeX.min!, 0],
+        [this.valuesRangeX.max!, 0],
         [0, 1],
       ),
     );
     this.baseValueToPixel = Matrix.invert(this.basePixelToValue);
+
+    makeObservable(this, {
+      cursorPos: cell,
+    });
   }
 
   get state() {
-    return {};
+    return {
+      cursorPos: this.cursorPos,
+    };
   }
 
   setCanvasElement(canvasElement: HTMLCanvasElement) {
@@ -64,7 +76,7 @@ export class SerifsController {
     this.context.font = '14px serif';
     this.draw();
     const clientRect = canvasElement.getBoundingClientRect();
-
+    const getCursorPosition = (event: any) => getCursorCoordinates(event, clientRect);
     const setNextTransform = (next: IMatrix) => {
       this.forward = Matrix.multiply(next, this.forward);
       this.inverse = Matrix.invert(this.forward);
@@ -72,12 +84,22 @@ export class SerifsController {
     };
     this.scaleGenerator = new ScaleGenerator(
       canvasElement,
-      (event: any) => getCursorCoordinates(event, clientRect),
+      getCursorPosition,
       setNextTransform,
     );
     this.dragGenerator = new DragGenerator(
       canvasElement,
       setNextTransform,
+    );
+    this.cursorPositionGenerator = new CursorPositionGenerator(
+      canvasElement,
+      getCursorPosition,
+      (point: IPoint) => {
+        this.cursorPos = {
+          pixel: point[0],
+          value: this.transformedPixelToValue(point)[0],
+        };
+      },
     );
   }
 
@@ -88,17 +110,14 @@ export class SerifsController {
   }
 
   drawSerifsAndLabels() {
-    const pixelToValue = this.transformedPixelToValue;
-    const valueToPixel = this.valueToTransformedPixel;
-    // const step = Matrix.apply(this.basePixelToValue, [this.step, 0])[0]
-    // const step = this.pixelToTransformedValue([this.step, 0])[0];
-    const step = this.step;
-    // const step = pixelToValue([this.step, 0])[0];
-    console.log(`step`, step);
-
     this.context.clearRect(0, 0, canvasWidth, canvasHeight);
+    const valueToPixel = this.valueToTransformedPixel;
 
-    for (let i = this.visValuesRangeX.minVis!; i <= this.visValuesRangeX.maxVis!; i = i + step) {
+    for (
+      let i = this.valuesRangeX.min!;
+      i <= this.valuesRangeX.max!;
+      i = i + this.valueStep
+    ) {
       const pos = valueToPixel([i, 0])[0];
       this.context.beginPath();
       this.context.moveTo(pos, 0);
@@ -125,12 +144,13 @@ export class SerifsController {
   dispose() {
     this.scaleGenerator?.dispose();
     this.dragGenerator?.dispose();
+    this.cursorPositionGenerator?.dispose();
   }
 
 }
 
 
-interface IVisValuesRange {
-  minVis?: number; // min видимое значение оси
-  maxVis?: number; // max видимое значение оси
+interface IValuesRange {
+  min: number;
+  max: number;
 }

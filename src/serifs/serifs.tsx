@@ -1,5 +1,5 @@
 import {useCellState} from "@do-while-for-each/tree-cell-react";
-import {useState, useRef, useEffect} from 'react';
+import {useEffect, useRef, useState} from 'react';
 import {canvasHeight, canvasWidth} from "../app-common/constant";
 import {SerifsController} from "./serifs.controller";
 import s from './serifs.module.css';
@@ -7,7 +7,7 @@ import s from './serifs.module.css';
 export function Serifs() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [controller] = useState(() => new SerifsController());
-  const [{}] = useCellState(() => controller.state);
+  const [{cursorPos}] = useCellState(() => controller.state);
 
   useEffect(() => {
     controller.setCanvasElement(canvasRef.current!);
@@ -16,8 +16,19 @@ export function Serifs() {
   useEffect(() => () => controller.dispose(), []);
 
   return (
-    <canvas className={s.canvas}
-            width={canvasWidth} height={canvasHeight}
-            ref={canvasRef}/>
+    <div className={s.container}>
+
+      <canvas className={s.canvas}
+              width={canvasWidth} height={canvasHeight}
+              ref={canvasRef}/>
+
+      <div className={s.cursorPos}>
+        <code>
+          pixel: {cursorPos.pixel} <br/>
+          value: {cursorPos.value}
+        </code>
+      </div>
+
+    </div>
   );
 }
