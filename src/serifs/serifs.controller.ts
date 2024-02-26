@@ -12,10 +12,10 @@ export class SerifsController {
   context: CanvasRenderingContext2D;
 
   valuesRangeX: IValuesRange = {
-    min: 0,
+    min: -40,
     max: 800,
   };
-  valueStep = 100;
+  valueStep = 10;
 
   basePixelToValue: IMatrix;
   baseValueToPixel: IMatrix;
@@ -49,16 +49,21 @@ export class SerifsController {
     this.basePixelToValue = Operator.proportionsWithRotationConverter(
       Basis.fromExtent(
         [0, 0],
-        [canvasWidth, 0],
-        [0, canvasHeight],
+        [100, 0],
+        [0, 1],
       ),
       Basis.fromExtent(
-        [this.valuesRangeX.min!, 0],
-        [this.valuesRangeX.max!, 0],
+        [0, 0],
+        [10, 0],
         [0, 1],
       ),
     );
     this.baseValueToPixel = Matrix.invert(this.basePixelToValue);
+
+    // сдвигаю, чтобы по левой границе значение было 10
+    const moveVector = Matrix.apply(this.baseValueToPixel, [-10, 0]);
+    this.forward = Matrix.translateIdentity(moveVector[0], 0);
+    this.inverse = Matrix.invert(this.forward);
 
     makeObservable(this, {
       cursorPos: cell,
@@ -97,7 +102,7 @@ export class SerifsController {
       (point: IPoint) => {
         this.cursorPos = {
           pixel: point[0],
-          value: this.transformedPixelToValue(point)[0],
+          value: this.transformedPixelToValue([point[0], 0])[0],
         };
       },
     );
