@@ -1,18 +1,18 @@
-import {Basis, identityMatrix, IMatrix, IPoint, Matrix, Operator} from "@do-while-for-each/math";
-import {cell, makeObservable} from "@do-while-for-each/tree-cell";
-import {CursorPositionGenerator} from "./util/cursor-position-generator";
-import {canvasHeight, canvasWidth} from "../app-common/constant";
-import {getCursorCoordinates} from "./util/cursor-coordinates";
-import {ScaleGenerator} from "./util/scale-generator";
-import {DragGenerator} from "./util/drag-generator";
-import {IPointConverter} from "./contract";
+import {Basis, identityMatrix, IMatrix, IPoint, Matrix, Operator} from '@do-while-for-each/math';
+import {cell, makeObservable} from '@do-while-for-each/tree-cell';
+import {CursorPositionGenerator} from './util/cursor-position-generator';
+import {canvasHeight, canvasWidth} from '../app-common/constant';
+import {getCursorCoordinates} from './util/cursor-coordinates';
+import {ScaleGenerator} from './util/scale-generator';
+import {DragGenerator} from './util/drag-generator';
+import {IPointConverter} from './contract';
 
 export class SerifsController {
 
   context: CanvasRenderingContext2D;
 
   valuesRangeX: IValuesRange = {
-    min: -40,
+    min: 0,
     max: 800,
   };
   valueStep = 10;
@@ -60,11 +60,6 @@ export class SerifsController {
     );
     this.baseValueToPixel = Matrix.invert(this.basePixelToValue);
 
-    // сдвигаю, чтобы по левой границе значение было 10
-    const moveVector = Matrix.apply(this.baseValueToPixel, [-10, 0]);
-    this.forward = Matrix.translateIdentity(moveVector[0], 0);
-    this.inverse = Matrix.invert(this.forward);
-
     makeObservable(this, {
       cursorPos: cell,
     });
@@ -105,6 +100,15 @@ export class SerifsController {
           value: this.transformedPixelToValue([point[0], 0])[0],
         };
       },
+    );
+
+    // сдвигаю, чтобы по левой границе значение было 10
+    const moveVector = Matrix.apply(this.baseValueToPixel, [-500, 0]);
+    setNextTransform(
+      Matrix.multiply(
+        [1, 0, 0, 1, canvasWidth / 2, 0], // (2) но я хочу, чтобы это значение стояло по центру
+        [1, 0, 0, 1, moveVector[0], 0]    // (1) сдвигаю, чтобы по левому краю было целевое значение value-пространства
+      )
     );
   }
 

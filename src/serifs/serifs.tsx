@@ -7,7 +7,7 @@ import s from './serifs.module.css';
 export function Serifs() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const [controller] = useState(() => new SerifsController());
-  const [{cursorPos}] = useCellState(() => controller.state);
+  const [{cursorPos}] = useCellState<any>(() => controller.state);
 
   useEffect(() => {
     controller.setCanvasElement(canvasRef.current!);
