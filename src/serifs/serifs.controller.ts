@@ -23,7 +23,7 @@ export class SerifsController {
   forward: IMatrix = identityMatrix;
   inverse: IMatrix = identityMatrix;
 
-  get transformedPixelToValue(): IPointConverter {
+  get pixelToValue(): IPointConverter {
     const conv = Matrix.multiply(
       this.basePixelToValue, // (2)
       this.inverse           // (1)
@@ -31,7 +31,7 @@ export class SerifsController {
     return (point: IPoint): IPoint => Matrix.apply(conv, point);
   }
 
-  get valueToTransformedPixel(): IPointConverter {
+  get valueToPixel(): IPointConverter {
     const conv = Matrix.multiply(
       this.forward,         // (2)
       this.baseValueToPixel // (1)
@@ -74,7 +74,7 @@ export class SerifsController {
   setCanvasElement(canvasElement: HTMLCanvasElement) {
     this.context = canvasElement.getContext('2d')!;
     this.context.font = '14px serif';
-    this.draw();
+
     const clientRect = canvasElement.getBoundingClientRect();
     const getCursorPosition = (event: any) => getCursorCoordinates(event, clientRect);
     const setNextTransform = (next: IMatrix) => {
@@ -97,7 +97,7 @@ export class SerifsController {
       (point: IPoint) => {
         this.cursorPos = {
           pixel: point[0],
-          value: this.transformedPixelToValue([point[0], 0])[0],
+          value: this.pixelToValue([point[0], 0])[0],
         };
       },
     );
@@ -119,13 +119,13 @@ export class SerifsController {
   }
 
   drawSerifsAndLabels() {
+    const {valueToPixel, valuesRangeX, valueStep} = this;
     this.context.clearRect(0, 0, canvasWidth, canvasHeight);
-    const valueToPixel = this.valueToTransformedPixel;
 
     for (
-      let i = this.valuesRangeX.min!;
-      i <= this.valuesRangeX.max!;
-      i = i + this.valueStep
+      let i = valuesRangeX.min!;
+      i <= valuesRangeX.max!;
+      i = i + valueStep
     ) {
       const pos = valueToPixel([i, 0])[0];
       this.context.beginPath();
